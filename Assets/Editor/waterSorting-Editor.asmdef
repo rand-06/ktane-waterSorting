@@ -1,0 +1,10 @@
+{
+  "name": "waterSorting-Editor",
+  "references": [
+    "waterSorting"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": []
+}

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using KeepCoding;
@@ -9,6 +8,7 @@ public class waterSortingScript : MonoBehaviour
 {
 	public Transform tubeContainer;
 	public GameObject tubeObject;
+	public AudioClip pourSound;
 	
 
 	void Awake()
@@ -16,18 +16,39 @@ public class waterSortingScript : MonoBehaviour
 		initSettings();
 		initTubes();
 		initTubesConfiguration();
-		initColors();
+		//initColors();
 		colorTubes();
 	}
-	void Start () {}
 
-	List<Color> colorsList = new List<Color>();
-	void initColors(){ for (int i=0; i<colors.Length; i++) colorsList.Add(new Color.HSVToRGB((float)i/colors.Length,1,1)); }
+	//List<Color> colorsList = new List<Color>();
+	List<Color> colorsList = new List<Color>
+	{
+		Color.red,
+		Color.green,
+		Color.blue,
+		Color.yellow,
+		Color.magenta,
+		Color.cyan,
+		new Color(1f,.5f,0),
+		new Color(0.6f,1f,0f),
+		new Color(0,1f,.5f),
+		new Color(0,0.5f,1f),
+		new Color(0.5f,0f,1f),
+		new Color(1f,0f,.5f),
+		Color.white,
+		Color.black,
+		new Color(0.5f,.25f,0)
+	};
+	//void initColors(){ for (int i=0; i<colors; i++) colorsList.Add(Color.HSVToRGB((float)i/colors,1,1)); }
 
 	void colorTubes(){
-		for (int i = 0; i<config.Length; i++){
-			for (int j=0; j<config.Length; j++){
-				water[i][j].GetComponent<MeshRenderer>().material.color = colorsList[config[i][j]];
+		for (int i = 0; i<config.Count; i++){
+			for (int j=0; j<config[i].Count; j++){
+				water[i][j].GetComponent<MeshRenderer>().material.color = colorsList[config[i][j]-1];
+			}
+			for (int j = config[i].Count; j < sectors; j++)
+			{
+				water[i][j].GetComponent<MeshRenderer>().material.color = Color.gray;
 			}
 		}
 	}
@@ -38,51 +59,65 @@ public class waterSortingScript : MonoBehaviour
 
 	private List<List<int>> config = new List<List<int>>();
 
-	bool checkForSolve() => config.All(x => x.All(y => y == x[0]));
+	bool checkForSolve() => config.Where(x=>x.Count>0).All(x => x.All(y => y == x[0]) && x.Count == sectors);
+	
+	bool doneShuffling() => config.Where(x=>x.Count>1).All(x=>Enumerable.Range(0,x.Count-1).All(i => x[i]!=x[i+1]));
 
 	bool canPour(int start, int end, bool scrambleRuleset = false)=> !
 		(config[end].Count == sectors || config[start].Count == 0 ||
-			(config[end].Count > 0 && ((config[start].Last == config[end].Last) == scrambleRuleset)));
+			(config[end].Count > 0 && ((config[start].Last() == config[end].Last()) && scrambleRuleset)) || start == end);
 
 	void pour(int start, int end, bool scrambleRuleset = false){
 		if (!canPour(start, end, scrambleRuleset)) return;
-		
+		//print("Can pour.");
 		if (scrambleRuleset){
 			config[end].Add(config[start].Last());
 			config[start].RemoveAt(config[start].Count - 1);
 		}
 		else{
-			while (config[begin].Count > 0 && config[end].Count < sectors && config[begin].Last() == config[end].Last()){
+			//print($"Start count: {config[start].Count}, end count: {config[end].Count}, last elements are: {config[start].LastOrDefault()} and {config[end].LastOrDefault()}");
+			//while (config[start].Count > 0 && config[end].Count < sectors && (config[start].LastOrDefault() == config[end].LastOrDefault() || config[end].LastOrDefault() == 0)){
+			int pourAmount = 1;
+			if (config[start].Count > 1)
+			{
+				pourAmount = config[start].Select(x => x == config[start].Last()).Reverse().TakeWhile(x=>x).Count();
+				if (pourAmount > sectors - config[end].Count) pourAmount = sectors - config[end].Count;
+			}
+			for (int i=0; i<pourAmount; i++){
 				config[end].Add(config[start].Last());
 				config[start].RemoveAt(config[start].Count - 1);
 			}
+			GetComponent<KMAudio>().PlaySoundAtTransform(pourSound.name, transform);
 		}
 	}
-
+/*
 	bool forcePour(int start, int end){
 		if (config[end].Count == sectors || config[start].Count == 0) return false;
 		config[end].Add(config[start].Last());
 		config[start].RemoveAt(config[start].Count - 1);
 		return true;
 	}
-
+*/
 	void initTubesConfiguration(){
 		// GENERATING SOLVED STATE
 		for (int i=0; i<tubesAmount; i++){
-		config.Add(new List<int>());
+			config.Add(new List<int>());
 			for (int j=0; j<sectors; j++){
-				config[i].Add(i%colors);
+				config[i].Add(i%colors + 1);
 			}
 		}
 		for (int i=0; i<emptiesAmount; i++) config.Add(new List<int>());
 
 		//SHUFFLING (hopefully)
-		for (int i=0; i<10*sectors*tubesAmount; i++){
-			int start = Enumerable.Range(0, config.Length).Where(x => Enumerable.Range(0, config.Length).Any(y => canPour(x,y,true))).OrderBy(_ => UnityEngine.Random.value).FirstOrDefault(-1);
+		//for (int i=0; i<10*tubesAmount*sectors; i++){
+		while (!doneShuffling()){
+			int start = Enumerable.Range(0, config.Count).Where(x => Enumerable.Range(0, config.Count).Any(y => canPour(x,y,true))).OrderBy(_ => UnityEngine.Random.value).FirstOrDefault(-1);
 			if (start == -1) return; //just woteva, sectors/tubes is way greater than colors
-			int end = Enumerable.Range(0, config.Length).PickRandom(y => canPour(start,y,true));
+			int end = Enumerable.Range(0, config.Count).Where(y => canPour(start,y,true)).PickRandom();
 			pour(start,end,true);
 		}
+		print("List is: " + config.Select(tube => tube.Select(c => c.ToString()).Aggregate("", (a, b) => a + ", " + b))
+			.Aggregate((a, b) => a + "\n" + b));
 	}
 	
 	void initTubes()
@@ -119,11 +154,13 @@ public class waterSortingScript : MonoBehaviour
 			tubes[i].transform.localPosition = positions[i];
 		}
 
-		for (int i = 0; i < tubes.Amount; i++){
+		for (int i = 0; i < tubes.Count; i++){
 			int i1 = i;
-			tubes[i1].OnInteract+=delegate{
-				handlePress(i1); return false;
-			}
+			tubes[i1].GetComponent<KMSelectable>().OnInteract += delegate
+			{
+				handlePress(i1);
+				return false;
+			};
 		}
 	}
 
@@ -131,11 +168,17 @@ public class waterSortingScript : MonoBehaviour
 	void handlePress(int index){
 		if (currentSelectedTube == -1){
 			currentSelectedTube = index;
+			tubes[currentSelectedTube].GetComponent<MeshRenderer>().material.color = Color.white;
 		}
 		else{
 			pour(currentSelectedTube, index);
+			tubes[currentSelectedTube].GetComponent<MeshRenderer>().material.color =
+				new Color(0xc3 / 256f, 0xc3 / 256f, 0xc3 / 256f);
 			currentSelectedTube = -1;
 			colorTubes();
+			print("List is: " + config.Select(tube => tube.Select(c => c.ToString()).Aggregate("", (a, b) => a + ", " + b))
+				.Aggregate((a, b) => a + "\n" + b));
+			
 			if (checkForSolve()) GetComponent<KMBombModule>().HandlePass();
 		}
 	}
@@ -181,7 +224,7 @@ public class waterSortingScript : MonoBehaviour
 		TryOverrideMission();
 		tubesAmount = Settings.tubesAmount < 2 || Settings.tubesAmount>MAX_TUBES?5:Settings.tubesAmount;
 		emptiesAmount = Settings.emptiesAmount < 2 || Settings.emptiesAmount>tubesAmount?2:Settings.emptiesAmount;
-		sectors = Settings.sectors < 2 || Settings.sectors>MAX_SECTORS?4:Settings.emptiesAmount;
+		sectors = Settings.sectors < 2 || Settings.sectors>MAX_SECTORS?4:Settings.sectors;
 		colors = Settings.colors < 2 || Settings.colors>tubesAmount?tubesAmount:Settings.colors;
 	}
 	

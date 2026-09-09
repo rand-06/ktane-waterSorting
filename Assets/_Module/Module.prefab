@@ -22,6 +22,7 @@ GameObject:
   - component: {fileID: 33615070561295006}
   - component: {fileID: 65852311273781230}
   - component: {fileID: 23548312358595836}
+  - component: {fileID: 114518869572523964}
   m_Layer: 0
   m_Name: Cube (1)
   m_TagString: Untagged
@@ -57,6 +58,7 @@ GameObject:
   - component: {fileID: 33328088961966568}
   - component: {fileID: 65678359008644136}
   - component: {fileID: 23994503574002234}
+  - component: {fileID: 114876013920863568}
   m_Layer: 0
   m_Name: Cube (1)
   m_TagString: Untagged
@@ -89,6 +91,7 @@ GameObject:
   - component: {fileID: 4333625378916400}
   - component: {fileID: 33676049055747844}
   - component: {fileID: 23533612615851666}
+  - component: {fileID: 114672223924756674}
   m_Layer: 0
   m_Name: ComponentPuzzleBackground
   m_TagString: Untagged
@@ -107,6 +110,7 @@ GameObject:
   - component: {fileID: 33296912794445908}
   - component: {fileID: 65607535624314490}
   - component: {fileID: 23904553850715708}
+  - component: {fileID: 114295126322606058}
   m_Layer: 0
   m_Name: Cube
   m_TagString: Untagged
@@ -171,6 +175,7 @@ GameObject:
   - component: {fileID: 33391278572960254}
   - component: {fileID: 65520328003167948}
   - component: {fileID: 23247255183098482}
+  - component: {fileID: 114332535902735690}
   m_Layer: 0
   m_Name: Cube
   m_TagString: Untagged
@@ -621,6 +626,32 @@ MonoBehaviour:
   m_Script: {fileID: -1675560866, guid: 45b809be76fd7a3468b6f517bced6f28, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &114295126322606058
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1171261347487096}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1005838349, guid: 45b809be76fd7a3468b6f517bced6f28, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShaderNames:
+  - Standard
+--- !u!114 &114332535902735690
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1767685709390240}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1005838349, guid: 45b809be76fd7a3468b6f517bced6f28, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShaderNames:
+  - KT/Mobile/DiffuseTint
 --- !u!114 &114392861769032698
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -654,6 +685,19 @@ MonoBehaviour:
   AllowSelectionWrapY: 0
   ForceSelectionHighlight: 0
   ForceInteractionHighlight: 0
+--- !u!114 &114518869572523964
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1011212489870568}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1005838349, guid: 45b809be76fd7a3468b6f517bced6f28, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShaderNames:
+  - Standard
 --- !u!114 &114639623408433880
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -667,6 +711,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   HighlightScale: {x: 1, y: 1, z: 1}
   OutlineAmount: 0
+--- !u!114 &114672223924756674
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1117475112844754}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1005838349, guid: 45b809be76fd7a3468b6f517bced6f28, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShaderNames:
+  - KT/Mobile/Diffuse
 --- !u!114 &114745828406521922
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -692,3 +749,16 @@ MonoBehaviour:
   m_Script: {fileID: -381104716, guid: 45b809be76fd7a3468b6f517bced6f28, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &114876013920863568
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1032460130072548}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1005838349, guid: 45b809be76fd7a3468b6f517bced6f28, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShaderNames:
+  - KT/Mobile/DiffuseTint
