@@ -9,16 +9,27 @@ public class waterSortingScript : MonoBehaviour
 {
 	public Transform tubeContainer;
 	public GameObject tubeObject;
+	
 
 	void Awake()
 	{
 		initSettings();
 		initTubes();
+		initTubesConfiguration();
+		initColors();
+		colorTubes();
 	}
-	
-	void Start () {
-		
-		
+	void Start () {}
+
+	List<Color> colorsList = new List<Color>();
+	void initColors(){ for (int i=0; i<colors.Length; i++) colorsList.Add(new Color.HSVToRGB((float)i/colors.Length,1,1)); }
+
+	void colorTubes(){
+		for (int i = 0; i<config.Length; i++){
+			for (int j=0; j<config.Length; j++){
+				water[i][j].GetComponent<MeshRenderer>().material.color = colorsList[config[i][j]];
+			}
+		}
 	}
 
 	private List<GameObject> tubes;
@@ -106,6 +117,26 @@ public class waterSortingScript : MonoBehaviour
 		{
 			tubes[i].transform.localScale = size;	
 			tubes[i].transform.localPosition = positions[i];
+		}
+
+		for (int i = 0; i < tubes.Amount; i++){
+			int i1 = i;
+			tubes[i1].OnInteract+=delegate{
+				handlePress(i1); return false;
+			}
+		}
+	}
+
+	int currentSelectedTube = -1;
+	void handlePress(int index){
+		if (currentSelectedTube == -1){
+			currentSelectedTube = index;
+		}
+		else{
+			pour(currentSelectedTube, index);
+			currentSelectedTube = -1;
+			colorTubes();
+			if (checkForSolve()) GetComponent<KMBombModule>().HandlePass();
 		}
 	}
 
