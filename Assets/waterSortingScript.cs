@@ -23,6 +23,56 @@ public class waterSortingScript : MonoBehaviour
 
 	private List<GameObject> tubes;
 	private List<List<GameObject>> water;
+
+
+	private List<List<int>> config = new List<List<int>>();
+
+	bool checkForSolve() => config.All(x => x.All(y => y == x[0]));
+
+	bool canPour(int start, int end, bool scrambleRuleset = false)=> !
+		(config[end].Count == sectors || config[start].Count == 0 ||
+			(config[end].Count > 0 && ((config[start].Last == config[end].Last) == scrambleRuleset)));
+
+	void pour(int start, int end, bool scrambleRuleset = false){
+		if (!canPour(start, end, scrambleRuleset)) return;
+		
+		if (scrambleRuleset){
+			config[end].Add(config[start].Last());
+			config[start].RemoveAt(config[start].Count - 1);
+		}
+		else{
+			while (config[begin].Count > 0 && config[end].Count < sectors && config[begin].Last() == config[end].Last()){
+				config[end].Add(config[start].Last());
+				config[start].RemoveAt(config[start].Count - 1);
+			}
+		}
+	}
+
+	bool forcePour(int start, int end){
+		if (config[end].Count == sectors || config[start].Count == 0) return false;
+		config[end].Add(config[start].Last());
+		config[start].RemoveAt(config[start].Count - 1);
+		return true;
+	}
+
+	void initTubesConfiguration(){
+		// GENERATING SOLVED STATE
+		for (int i=0; i<tubesAmount; i++){
+		config.Add(new List<int>());
+			for (int j=0; j<sectors; j++){
+				config[i].Add(i%colors);
+			}
+		}
+		for (int i=0; i<emptiesAmount; i++) config.Add(new List<int>());
+
+		//SHUFFLING (hopefully)
+		for (int i=0; i<10*sectors*tubesAmount; i++){
+			int start = Enumerable.Range(0, config.Length).Where(x => Enumerable.Range(0, config.Length).Any(y => canPour(x,y,true))).OrderBy(_ => UnityEngine.Random.value).FirstOrDefault(-1);
+			if (start == -1) return; //just woteva, sectors/tubes is way greater than colors
+			int end = Enumerable.Range(0, config.Length).PickRandom(y => canPour(start,y,true));
+			pour(start,end,true);
+		}
+	}
 	
 	void initTubes()
 	{
