@@ -116,8 +116,6 @@ public class waterSortingScript : MonoBehaviour
 			int end = Enumerable.Range(0, config.Count).Where(y => canPour(start,y,true)).PickRandom();
 			pour(start,end,true);
 		}
-		print("List is: " + config.Select(tube => tube.Select(c => c.ToString()).Aggregate("", (a, b) => a + ", " + b))
-			.Aggregate((a, b) => a + "\n" + b));
 	}
 	
 	void initTubes()
@@ -176,8 +174,6 @@ public class waterSortingScript : MonoBehaviour
 				new Color(0xc3 / 256f, 0xc3 / 256f, 0xc3 / 256f);
 			currentSelectedTube = -1;
 			colorTubes();
-			print("List is: " + config.Select(tube => tube.Select(c => c.ToString()).Aggregate("", (a, b) => a + ", " + b))
-				.Aggregate((a, b) => a + "\n" + b));
 			
 			if (checkForSolve()) GetComponent<KMBombModule>().HandlePass();
 		}
@@ -282,5 +278,7 @@ public class waterSortingScript : MonoBehaviour
 			} }
 		}
 	};
+	
+	private string TwitchHelpMessage = "Use !{0}"
 	
 }
