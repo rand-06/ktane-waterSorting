@@ -59,36 +59,31 @@ public class waterSortingScript : MonoBehaviour
 
 	private List<List<int>> config = new List<List<int>>();
 
+	// Hardcoded ruleset switch: true = new (strict pour, deal-based generation),
+	// false = old/legacy (lenient pour lets mismatched colors merge, reverse-pour scramble).
+	private const bool USE_NEW_RULESET = true;
+
 	bool checkForSolve() => config.Where(x=>x.Count>0).All(x => x.All(y => y == x[0]) && x.Count == sectors);
-	
+
 	bool doneShuffling() => config.Where(x=>x.Count>1).All(x=>Enumerable.Range(0,x.Count-1).All(i => x[i]!=x[i+1]));
 
-	bool canPour(int start, int end, bool scrambleRuleset = false)=> !
-		(config[end].Count == sectors || config[start].Count == 0 ||
-			(config[end].Count > 0 && ((config[start].Last() == config[end].Last()) && scrambleRuleset)) || start == end);
+	bool canPour(int start, int end)=>
+		config[start].Count > 0 && config[end].Count < sectors && start != end &&
+			(!USE_NEW_RULESET || config[end].Count == 0 || config[end].Last() == config[start].Last());
 
-	void pour(int start, int end, bool scrambleRuleset = false){
-		if (!canPour(start, end, scrambleRuleset)) return;
-		//print("Can pour.");
-		if (scrambleRuleset){
+	void pour(int start, int end){
+		if (!canPour(start, end)) return;
+		int pourAmount = 1;
+		if (config[start].Count > 1)
+		{
+			pourAmount = config[start].Select(x => x == config[start].Last()).Reverse().TakeWhile(x=>x).Count();
+			if (pourAmount > sectors - config[end].Count) pourAmount = sectors - config[end].Count;
+		}
+		for (int i=0; i<pourAmount; i++){
 			config[end].Add(config[start].Last());
 			config[start].RemoveAt(config[start].Count - 1);
 		}
-		else{
-			//print($"Start count: {config[start].Count}, end count: {config[end].Count}, last elements are: {config[start].LastOrDefault()} and {config[end].LastOrDefault()}");
-			//while (config[start].Count > 0 && config[end].Count < sectors && (config[start].LastOrDefault() == config[end].LastOrDefault() || config[end].LastOrDefault() == 0)){
-			int pourAmount = 1;
-			if (config[start].Count > 1)
-			{
-				pourAmount = config[start].Select(x => x == config[start].Last()).Reverse().TakeWhile(x=>x).Count();
-				if (pourAmount > sectors - config[end].Count) pourAmount = sectors - config[end].Count;
-			}
-			for (int i=0; i<pourAmount; i++){
-				config[end].Add(config[start].Last());
-				config[start].RemoveAt(config[start].Count - 1);
-			}
-			GetComponent<KMAudio>().PlaySoundAtTransform(pourSound.name, transform);
-		}
+		GetComponent<KMAudio>().PlaySoundAtTransform(pourSound.name, transform);
 	}
 /*
 	bool forcePour(int start, int end){
@@ -99,7 +94,45 @@ public class waterSortingScript : MonoBehaviour
 	}
 */
 	void initTubesConfiguration(){
+		if (USE_NEW_RULESET) initTubesConfigurationNew();
+		else initTubesConfigurationLegacy();
+	}
+
+	void initTubesConfigurationNew(){
+		// Same color multiset the solved state uses: tube i gets `sectors` copies of color i%colors+1.
+		List<int> allColors = new List<int>();
+		for (int i=0; i<tubesAmount; i++)
+			for (int j=0; j<sectors; j++)
+				allColors.Add(i%colors + 1);
+
+		// Deal the shuffled multiset back into tubes (no pouring involved, so a cross-color
+		// pour can never happen during generation). With emptiesAmount>=2 spare tubes this is
+		// always solvable under the strict pour rule.
+		const int MAX_ATTEMPTS = 1000;
+		for (int attempt = 0; attempt < MAX_ATTEMPTS; attempt++){
+			List<int> shuffled = allColors.OrderBy(_ => UnityEngine.Random.value).ToList();
+			config = new List<List<int>>();
+			for (int i=0; i<tubesAmount; i++) config.Add(shuffled.Skip(i*sectors).Take(sectors).ToList());
+			for (int i=0; i<emptiesAmount; i++) config.Add(new List<int>());
+			if (doneShuffling()) return;
+		}
+	}
+
+	// Legacy scramble-specific pour: single-unit move, requires MISMATCHED (or empty) top
+	// colors, independent of the real canPour/pour above. Only used by legacy generation.
+	bool legacyScrambleCanPour(int start, int end)=> !
+		(config[end].Count == sectors || config[start].Count == 0 ||
+			(config[end].Count > 0 && config[start].Last() == config[end].Last()) || start == end);
+
+	void legacyScramblePour(int start, int end){
+		if (!legacyScrambleCanPour(start, end)) return;
+		config[end].Add(config[start].Last());
+		config[start].RemoveAt(config[start].Count - 1);
+	}
+
+	void initTubesConfigurationLegacy(){
 		// GENERATING SOLVED STATE
+		config = new List<List<int>>();
 		for (int i=0; i<tubesAmount; i++){
 			config.Add(new List<int>());
 			for (int j=0; j<sectors; j++){
@@ -109,12 +142,11 @@ public class waterSortingScript : MonoBehaviour
 		for (int i=0; i<emptiesAmount; i++) config.Add(new List<int>());
 
 		//SHUFFLING (hopefully)
-		//for (int i=0; i<10*tubesAmount*sectors; i++){
 		while (!doneShuffling()){
-			int start = Enumerable.Range(0, config.Count).Where(x => Enumerable.Range(0, config.Count).Any(y => canPour(x,y,true))).OrderBy(_ => UnityEngine.Random.value).FirstOrDefault(-1);
+			int start = Enumerable.Range(0, config.Count).Where(x => Enumerable.Range(0, config.Count).Any(y => legacyScrambleCanPour(x,y))).OrderBy(_ => UnityEngine.Random.value).FirstOrDefault(-1);
 			if (start == -1) return; //just woteva, sectors/tubes is way greater than colors
-			int end = Enumerable.Range(0, config.Count).Where(y => canPour(start,y,true)).PickRandom();
-			pour(start,end,true);
+			int end = Enumerable.Range(0, config.Count).Where(y => legacyScrambleCanPour(start,y)).PickRandom();
+			legacyScramblePour(start,end);
 		}
 	}
 	
