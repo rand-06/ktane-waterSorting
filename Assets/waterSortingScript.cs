@@ -9,6 +9,7 @@ public class waterSortingScript : MonoBehaviour
 	public Transform tubeContainer;
 	public GameObject tubeObject;
 	public AudioClip pourSound;
+	public KMSelectable resetButton;
 	
 
 	void Awake()
@@ -16,7 +17,6 @@ public class waterSortingScript : MonoBehaviour
 		initSettings();
 		initTubes();
 		initTubesConfiguration();
-		//initColors();
 		colorTubes();
 	}
 
@@ -61,7 +61,7 @@ public class waterSortingScript : MonoBehaviour
 
 	// Hardcoded ruleset switch: true = new (strict pour, deal-based generation),
 	// false = old/legacy (lenient pour lets mismatched colors merge, reverse-pour scramble).
-	private const bool USE_NEW_RULESET = true;
+	private bool USE_NEW_RULESET;
 
 	bool checkForSolve() => config.Where(x=>x.Count>0).All(x => x.All(y => y == x[0]) && x.Count == sectors);
 
@@ -152,10 +152,17 @@ public class waterSortingScript : MonoBehaviour
 	
 	void initTubes()
 	{
+		resetButton.OnInteract += delegate
+		{
+			config = new List<List<int>>();
+			initTubesConfiguration();
+			colorTubes();
+			return false;
+		};
 		tubes = Enumerable.Range(0,tubesAmount+emptiesAmount)
 			.Select(_ => Instantiate(tubeObject, tubeContainer)).ToList();
 		tubeObject.SetActive(false);
-		GetComponent<KMSelectable>().Children = tubes.Select(x => x.GetComponent<KMSelectable>()).ToArray();
+		GetComponent<KMSelectable>().Children = Enumerable.Range(-1, tubes.Count + 1).Select(x=>x==-1?resetButton:tubes[x].GetComponent<KMSelectable>()).ToArray();
 		GetComponent<KMSelectable>().UpdateChildrenProperly();
 		water = Enumerable.Range(0,tubes.Count).Select(_ => new List<GameObject>()).ToList();
 		for (int i = 0; i < tubes.Count; i++)
@@ -254,6 +261,7 @@ public class waterSortingScript : MonoBehaviour
 		emptiesAmount = Settings.emptiesAmount < 2 || Settings.emptiesAmount>tubesAmount?2:Settings.emptiesAmount;
 		sectors = Settings.sectors < 2 || Settings.sectors>MAX_SECTORS?4:Settings.sectors;
 		colors = Settings.colors < 2 || Settings.colors>tubesAmount?tubesAmount:Settings.colors;
+		USE_NEW_RULESET = Settings.USE_NEW_RULESET;
 	}
 	
 	void TryOverrideMission()
@@ -273,6 +281,7 @@ public class waterSortingScript : MonoBehaviour
 		public int emptiesAmount = 2;
 		public int sectors = 4;
 		public int colors = 5;
+		public bool USE_NEW_RULESET = false;
 	}
 
 	static Dictionary<string, object>[] TweaksEditorSettings = new Dictionary<string, object>[]
@@ -306,11 +315,17 @@ public class waterSortingScript : MonoBehaviour
 					{ "Key", "colors" },
 					{ "Text", "Colors" },
 					{ "Description", "Amount of colors. Cannot exceed amount of filled tubes. Default is 5." }
+				},
+				new Dictionary<string, object>
+				{
+					{ "Key", "USE_NEW_RULESET" },
+					{ "Text", "New Ruleset" },
+					{ "Description", "New Ruleset brings the original experience of the water sorting games. Default is false." }
 				}
 			} }
 		}
 	};
 	
-	private string TwitchHelpMessage = "Use !{0}"
+	//private string TwitchHelpMessage = "Use !{0}"
 	
 }
